@@ -1,42 +1,32 @@
-import os
-import json
+import time
 
+def timeit(func):
+    """Decorator to measure execution time of a function."""
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        print(f"Execution time of {func.__name__}: {execution_time:.4f} seconds")
+        return result
+    return wrapper
 
-def load_json(file_path):
-    """
-    Load a JSON file and return its content.
-    """
-    if not os.path.isfile(file_path):
-        raise FileNotFoundError(f"{file_path} does not exist.")
-    with open(file_path, 'r') as file:
-        return json.load(file)
+@timeit
+def optimize_heavy_computation(data):
+    """Example function for heavy computation optimization."""
+    return [x * 2 for x in data if x % 2 == 0]
 
+@timeit
+def fetch_and_process_data(data_source):
+    """Fetch data from a source and process it efficiently."""
+    data = data_source.fetch()
+    processed_data = optimize_heavy_computation(data)
+    return processed_data
 
-def save_json(data, file_path):
-    """
-    Save data to a JSON file.
-    """
-    with open(file_path, 'w') as file:
-        json.dump(data, file, indent=4)
+if __name__ == '__main__':
+    class MockDataSource:
+        def fetch(self):
+            return list(range(1000000))
 
-
-def get_game_data(directory):
-    """
-    Retrieve all JSON game data files from a given directory.
-    """
-    game_data = []
-    for filename in os.listdir(directory):
-        if filename.endswith('.json'):
-            file_path = os.path.join(directory, filename)
-            game_data.append(load_json(file_path))
-    return game_data
-
-
-def format_game_data(data):
-    """
-    Transform game data into a readable format.
-    """
-    formatted_data = []
-    for game in data:
-        formatted_data.append(f"{game.get('title')} - {game.get('genre')} - {game.get('release_date')}")
-    return formatted_data
+    data_source = MockDataSource()
+    fetch_and_process_data(data_source)
