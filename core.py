@@ -1,29 +1,41 @@
-class GamePerformanceError(Exception):
-    """Custom exception for game performance issues."""
-    def __init__(self, message):
-        super().__init__(message)
+import random
+import sys
+
+class GameError(Exception):
+    pass
 
 class Game:
-    def __init__(self, name, fps_limit=60):
-        self.name = name
-        self.fps_limit = fps_limit
-        self.current_fps = 0
+    def __init__(self, players):
+        if not isinstance(players, int) or players <= 0:
+            raise GameError('Number of players must be a positive integer.')
+        self.players = players
+        self.scores = [0] * players
 
-    def update_performance(self, new_fps):
-        """Update the current FPS and check against limit."""
-        self.current_fps = new_fps
-        if self.current_fps > self.fps_limit:
-            raise GamePerformanceError(f"FPS limit exceeded: {self.current_fps} > {self.fps_limit}")
+    def play_round(self):
+        try:
+            for i in range(self.players):
+                score = random.randint(1, 10)
+                self.scores[i] += score
+                print(f'Player {i + 1} scored {score}. Total: {self.scores[i]}')
+        except Exception as e:
+            print(f'An error occurred during the round: {e}')
+            sys.exit(1)
 
-    def display_performance(self):
-        """Display current FPS and game name."""
-        performance_info = f"Game: {self.name}, Current FPS: {self.current_fps}"
-        return performance_info
+    def get_winner(self):
+        if all(s == 0 for s in self.scores):
+            raise GameError('No scores to determine a winner.')
+        winner = self.scores.index(max(self.scores)) + 1
+        return winner
 
 if __name__ == '__main__':
-    game = Game("Epic Adventure")
     try:
-        game.update_performance(75)  # Simulate FPS update
-    except GamePerformanceError as e:
-        print(e)
-    print(game.display_performance())
+        num_players = int(input('Enter number of players: '))
+        game = Game(num_players)
+        for _ in range(5):
+            game.play_round()
+        winner = game.get_winner()
+        print(f'The winner is Player {winner}.')
+    except GameError as e:
+        print(f'Game Error: {e}')
+    except ValueError:
+        print('Please enter a valid integer for number of players.')
