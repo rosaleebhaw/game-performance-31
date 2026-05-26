@@ -4,24 +4,24 @@ import requests
 class NetworkError(Exception):
     pass
 
-def retry_request(url, retries=3, backoff=2):
-    """Attempts to make a network request with retries on failure."""
-    for attempt in range(retries):
+def retry_request(url, max_retries=5, delay=2):
+    """
+    Perform a GET request with retry logic.
+    Retries up to max_retries times in case of failure.
+    """
+    attempts = 0
+    while attempts < max_retries:
         try:
             response = requests.get(url)
-            response.raise_for_status()  # Raise an HTTPError for bad responses
-            return response.json()  # Assuming we expect a JSON response
+            response.raise_for_status()  # Raise an error for bad responses
+            return response.json()  # Assuming we want JSON response
         except requests.RequestException as e:
-            print(f"Attempt {attempt + 1} failed: {e}")
-            if attempt < retries - 1:
-                time.sleep(backoff ** attempt)  # Exponential backoff
+            attempts += 1
+            print(f"Attempt {attempts} failed: {e}")
+            if attempts < max_retries:
+                time.sleep(delay)  # wait before retrying
             else:
-                raise NetworkError(f"Failed to retrieve data after {retries} attempts.") from e
+                raise NetworkError(f'Failed to fetch data after {max_retries} attempts')
 
-# Example usage
-if __name__ == '__main__':
-    try:
-        data = retry_request('https://api.example.com/data')
-        print(data)
-    except NetworkError as ne:
-        print(ne)
+# Example usage:
+# data = retry_request('https://api.example.com/data')
