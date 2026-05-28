@@ -1,32 +1,41 @@
-import time
+from typing import List, Dict
 
-def timeit(func):
-    """Decorator to measure execution time of a function."""
-    def wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        execution_time = end_time - start_time
-        print(f"Execution time of {func.__name__}: {execution_time:.4f} seconds")
-        return result
-    return wrapper
 
-@timeit
-def optimize_heavy_computation(data):
-    """Example function for heavy computation optimization."""
-    return [x * 2 for x in data if x % 2 == 0]
+def calculate_fps(frames: int, elapsed_time: float) -> float:
+    """Calculate frames per second.
 
-@timeit
-def fetch_and_process_data(data_source):
-    """Fetch data from a source and process it efficiently."""
-    data = data_source.fetch()
-    processed_data = optimize_heavy_computation(data)
-    return processed_data
+    Args:
+        frames (int): Number of frames rendered.
+        elapsed_time (float): Time taken to render frames in seconds.
 
-if __name__ == '__main__':
-    class MockDataSource:
-        def fetch(self):
-            return list(range(1000000))
+    Returns:
+        float: Calculated frames per second.
+    """
+    if elapsed_time <= 0:
+        return 0.0
+    return frames / elapsed_time
 
-    data_source = MockDataSource()
-    fetch_and_process_data(data_source)
+
+def average_frame_time(fps: List[float]) -> float:
+    """Calculate average frame time from FPS list.
+
+    Args:
+        fps (List[float]): List of frames per second values.
+
+    Returns:
+        float: Average frame time in milliseconds.
+    """
+    if not fps:
+        return 0.0
+    avg_fps = sum(fps) / len(fps)
+    return (1000.0 / avg_fps) if avg_fps > 0 else 0.0
+
+
+def log_performance_metrics(metrics: Dict[str, float]) -> None:
+    """Log performance metrics to console.
+
+    Args:
+        metrics (Dict[str, float]): Dictionary containing performance metrics.
+    """
+    for key, value in metrics.items():
+        print(f"{key}: {value}")
