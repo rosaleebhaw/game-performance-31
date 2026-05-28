@@ -1,36 +1,42 @@
-import time
-import random
-import requests
+import json
+import logging
+from typing import Any, Dict, List
 
-class NetworkError(Exception):
-    pass
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def retry_on_failure(max_attempts=3, delay=2):
-    """Retry decorator for network operations."""
-    def decorator(func):
-        def wrapper(*args, **kwargs):
-            attempts = 0
-            while attempts < max_attempts:
-                try:
-                    return func(*args, **kwargs)
-                except (requests.ConnectionError, requests.Timeout) as e:
-                    attempts += 1
-                    print(f"Attempt {attempts} failed: {e}")
-                    if attempts == max_attempts:
-                        raise NetworkError(f"All {max_attempts} attempts failed.")
-                    time.sleep(delay)
-        return wrapper
-    return decorator
-
-@retry_on_failure(max_attempts=5, delay=3)
-def fetch_data(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
-
-if __name__ == '__main__':
+def process_game_data(game_data: str) -> Dict[str, Any]:
+    """Processes game data from a JSON string."""
     try:
-        data = fetch_data('https://api.example.com/data')
-        print(data)
-    except NetworkError as e:
-        print(f"Failed to fetch data: {e}")
+        # Attempt to parse the JSON data
+        data = json.loads(game_data)
+    except json.JSONDecodeError as e:
+        logger.error('Invalid JSON data: %s', e)
+        return {'error': 'Invalid JSON format'}
+
+    # Check required fields
+    required_fields = ['game_id', 'score', 'player']
+    for field in required_fields:
+        if field not in data:
+            logger.warning('Missing required field: %s', field)
+            return {'error': f'Missing required field: {field}'}
+
+    # Process game data
+    try:
+        result = {  
+            'game_id': data['game_id'],  
+            'score': data['score'],  
+            'player': data['player'],  
+        }
+        logger.info('Successfully processed data for game_id: %s', data['game_id'])
+        return result
+    except Exception as e:
+        logger.error('Error processing game data: %s', e)
+        return {'error': 'Processing error', 'details': str(e)}
+
+# Example usage (would be removed in production):
+if __name__ == '__main__':
+    example_data = '{"game_id": "1234", "score": 95, "player": "Player1"}'
+    result = process_game_data(example_data)
+    print(result)
