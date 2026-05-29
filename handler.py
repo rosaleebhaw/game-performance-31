@@ -1,37 +1,36 @@
-import time
-import random
+import json
+import logging
 
-def process_game_event(event):
-    if event['type'] == 'start':
-        start_game(event['player'])
-    elif event['type'] == 'end':
-        end_game(event['player'], event['score'])
-    else:
-        print('Unknown event type')
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+class GameHandler:
+    def __init__(self):
+        self.players = []
 
-def start_game(player):
-    print(f'Starting game for {player}')
-    player['active'] = True
-    player['start_time'] = time.time()
+    def add_player(self, player_name):
+        if player_name:
+            self.players.append(player_name)
+            logger.info(f"Player {player_name} added.")
+        else:
+            logger.warning("Attempted to add an invalid player name.")
 
+    def remove_player(self, player_name):
+        try:
+            self.players.remove(player_name)
+            logger.info(f"Player {player_name} removed.")
+        except ValueError:
+            logger.warning(f"Player {player_name} not found in the list.")
 
-def end_game(player, score):
-    if player['active']:
-        player['active'] = False
-        duration = time.time() - player['start_time']
-        print(f'Game ended for {player}. Score: {score}, Duration: {duration:.2f}s')
-    else:
-        print(f'{player} is not currently active.')
+    def get_player_list(self):
+        return json.dumps(self.players)
 
-
-def generate_random_event():
-    events = ['start', 'end']
-    return {'type': random.choice(events), 'player': 'Player1', 'score': random.randint(0, 100)}
-
-
-# Example usage of event processing
 if __name__ == '__main__':
-    for _ in range(5):
-        event = generate_random_event()
-        process_game_event(event)
+    handler = GameHandler()
+    handler.add_player('Alice')
+    handler.add_player('Bob')
+    print(handler.get_player_list())
+    handler.remove_player('Alice')
+    print(handler.get_player_list())
+    handler.remove_player('Charlie')
