@@ -1,32 +1,34 @@
 import logging
+from typing import Optional
 
-# Configure the logger to output messages to console
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-class GameLogger:
-    def __init__(self, name):
-        self.logger = logging.getLogger(name)
+def setup_logger(name: str, log_file: str, level: Optional[int] = logging.INFO) -> logging.Logger:
+    """
+    Sets up a logger with the specified name and log file.
 
-    def debug(self, message):
-        self.logger.debug(message)
+    Args:
+        name (str): The name of the logger.
+        log_file (str): The file where logs will be stored.
+        level (Optional[int]): The logging level (default is INFO).
 
-    def info(self, message):
-        self.logger.info(message)
+    Returns:
+        logging.Logger: The configured logger instance.
+    """
+    handler = logging.FileHandler(log_file)
+    handler.setLevel(level)
 
-    def warning(self, message):
-        self.logger.warning(message)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
 
-    def error(self, message):
-        self.logger.error(message)
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
 
-    def critical(self, message):
-        self.logger.critical(message)
+    return logger
 
-# Sample usage to demonstrate functionality
+
+# Example usage
 if __name__ == '__main__':
-    logger = GameLogger('GamePerformance')
-    logger.info('Game started successfully!')
-    logger.debug('Loading assets...')
-    logger.warning('Low memory warning!')
-    logger.error('An error occurred!')
-    logger.critical('Critical failure! Ending game...')
+    logger = setup_logger('my_logger', 'my_log.log')
+    logger.info('This is an info message')
+    logger.error('This is an error message')
