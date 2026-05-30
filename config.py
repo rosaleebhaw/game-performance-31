@@ -1,35 +1,35 @@
 import json
 import os
 
-DEFAULT_CONFIG = {
-    'screen_width': 1920,
-    'screen_height': 1080,
-    'fullscreen': False,
-    'volume': 75,
-    'difficulty': 'normal'
-}
+class ConfigError(Exception):
+    pass
 
-class ConfigLoader:
-    def __init__(self, config_file='config.json'):
-        self.config_file = config_file
-        self.config = self.load_config()
+class Config:
+    def __init__(self, filepath):
+        self.filepath = filepath
+        self.config_data = {}
+        self.load_config()
 
     def load_config(self):
-        if os.path.isfile(self.config_file):
-            with open(self.config_file, 'r') as file:
-                try:
-                    config = json.load(file)
-                    return {**DEFAULT_CONFIG, **config}
-                except json.JSONDecodeError:
-                    print(f"Error loading config: {self.config_file}")
-                    return DEFAULT_CONFIG
-        else:
-            print(f"Config file not found, using defaults.")
-            return DEFAULT_CONFIG
+        if not os.path.exists(self.filepath):
+            raise ConfigError(f'Config file not found: {self.filepath}')
+        try:
+            with open(self.filepath, 'r') as config_file:
+                self.config_data = json.load(config_file)
+        except json.JSONDecodeError:
+            raise ConfigError('Error decoding JSON from config file')
+        except Exception as e:
+            raise ConfigError(f'Unexpected error: {str(e)}')
 
-    def get(self, key):
-        return self.config.get(key, DEFAULT_CONFIG.get(key))
+    def get(self, key, default=None):
+        return self.config_data.get(key, default)
 
-if __name__ == '__main__':
-    loader = ConfigLoader()
-    print(loader.config)  # Display loaded configuration
+    def set(self, key, value):
+        self.config_data[key] = value
+
+    def save(self):
+        try:
+            with open(self.filepath, 'w') as config_file:
+                json.dump(self.config_data, config_file, indent=4)
+        except Exception as e:
+            raise ConfigError(f'Error saving config file: {str(e)}')
