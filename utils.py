@@ -1,38 +1,23 @@
-def load_game_data(file_path):
-    import json
-    try:
-        with open(file_path, 'r') as file:
-            data = json.load(file)
-        return data
-    except FileNotFoundError:
-        print(f'Error: File not found at {file_path}')
-        return None
-    except json.JSONDecodeError:
-        print('Error: Failed to decode JSON from the file')
-        return None
-    except Exception as e:
-        print(f'Unexpected error: {e}')
-        return None
+import time
+import requests
+
+RETRY_COUNT = 3
+WAIT_TIME = 2  # seconds
 
 
-def save_game_data(file_path, data):
-    try:
-        with open(file_path, 'w') as file:
-            json.dump(data, file)
-    except IOError:
-        print(f'Error: Couldn't write to file at {file_path}')
-    except Exception as e:
-        print(f'Unexpected error: {e}')
-
-
-def validate_game_score(score):
-    if not isinstance(score, (int, float)):
-        raise ValueError('Score must be an integer or float')
-    if score < 0:
-        raise ValueError('Score cannot be negative')
-    return True
-
-
-def handle_game_exception(exception):
-    print(f'Game exception occurred: {exception}')
-    # Additional logging can be implemented here
+def retry_request(url, params=None):
+    """
+    Makes a network request with retry logic.
+    Retries for a specified count with wait time between attempts.
+    """
+    attempt = 0
+    while attempt < RETRY_COUNT:
+        try:
+            response = requests.get(url, params=params)
+            response.raise_for_status()  # Raise an error for bad responses
+            return response.json()  # Return JSON if request is successful
+        except requests.exceptions.RequestException as e:
+            print(f'Network error: {e}, attempt {attempt + 1} of {RETRY_COUNT}')
+            attempt += 1
+            time.sleep(WAIT_TIME)  # Wait before retrying
+    raise Exception(f'Failed to retrieve data from {url} after {RETRY_COUNT} retries')
